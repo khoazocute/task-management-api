@@ -7,6 +7,8 @@ router.get("/", controller.index); //gọi hàm index trong controller
 
 router.patch("/change-status/:id", controller.changeStatus)
 
+router.patch("/change-multi", controller.changeMulti)
+
 module.exports = router;
 
 //routes giống như bản chỉ đường 

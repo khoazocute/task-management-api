@@ -48,10 +48,16 @@ module.exports.changeStatus = async (req, res) => {
     try {
         const id = req.params.id;
         const status = req.body.status;
+//kiểm tra xem có trường trạng thái hay không 
+         if (!status) {
+            return res.status(400).json({
+                message: "Thiếu trạng thái cần cập nhật"
+            });
+        }
 
         await Task.updateOne(
             {_id : id },
-            {_status: status}
+            {status: status}
         )
         res.json({
             message: "Cập nhật trạng thái thành công",
@@ -66,3 +72,44 @@ module.exports.changeStatus = async (req, res) => {
     }
 
 };
+
+//[PATCH] /api/v1/change-multi
+module.exports.changeMulti = async (req, res) => {
+    try {
+        // Lấy dữ liệu từ request body: ids (mảng ID), key (trường cần cập nhật), value (giá trị mới)
+        const {ids, key, value} = req.body;
+// sử dụng object destructuring 
+        // Kiểm tra ids phải là mảng và không rỗng
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({
+                message : "Danh sách ids không hợp lệ"
+            })
+        }
+
+        // Kiểm tra key phải là "status" và value không rỗng
+        if (key !== "status" || !value || value.trim() === "") {
+             return res.status(400).json({
+                message : "Trạng thái không hợp lệ"
+            })
+        }
+
+        // Cập nhật trạng thái của nhiều task trong database
+        const result = await Task.updateMany(
+            {_id : {$in : ids}},
+            {status : value}
+        );
+
+        // Trả về response thành công
+         res.status(200).json({
+            message: "Cập nhật trạng thái nhiều công việc thành công",
+            ids: ids,
+            status: value
+        });
+    } catch (error) {
+        // Xử lý lỗi và trả về response lỗi
+        res.status(500).json({
+            message: "Cập nhật trạng thái nhiều công việc thất bại",
+            error: error.message
+        });
+    }
+}

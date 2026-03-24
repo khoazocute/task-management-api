@@ -9,6 +9,8 @@ router.patch("/change-status/:id", controller.changeStatus)
 
 router.patch("/change-multi", controller.changeMulti)
 
+router.post("/create", controller.Create_task)
+
 module.exports = router;
 
 //routes giống như bản chỉ đường 

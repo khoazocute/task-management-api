@@ -91,7 +91,7 @@ module.exports.changeMulti = async (req, res) => {
              return res.status(400).json({
                 message : "Trạng thái không hợp lệ"
             })
-        }
+        }   
 
         // Cập nhật trạng thái của nhiều task trong database
         const result = await Task.updateMany(
@@ -109,6 +109,49 @@ module.exports.changeMulti = async (req, res) => {
         // Xử lý lỗi và trả về response lỗi
         res.status(500).json({
             message: "Cập nhật trạng thái nhiều công việc thất bại",
+            error: error.message
+        });
+    }
+}
+// [POST] /api/v1/tasks/create
+// client gửi dữ liệu để tạo một công việc mới 
+// → backend nhận dữ liệu → kiểm tra dữ liệu hợp lệ → tạo object theo model → lưu vào database → trả kết quả về.
+module.exports.Create_task = async (req, res) => {
+    try {
+        const { title , status, content } = req.body;
+        // post,  put, patch thuongfd đọc dữ liệu từ body không phải từ params
+        //VALIDATE
+        if (!title || title.trim() === ""){
+            return res.status(400).json ({
+                message : "Trường title không được để trống"
+            });
+        }
+
+        if (status && !allowedStatus.includes(status)) {
+            return res.status(400).json({
+                message: "Trường status không hợp lệ"
+            });
+        }
+
+// model là khuôn mẫu dữ liệu
+// muốn lưu gì vào DB thì phải tạo object đúng theo model đó
+        //Sau khi dữ liệu ổn sẽ tạo mới 
+        const task = new Task ({
+            title,
+            status : status ||  "initial",
+            content : content || "",
+            deleted : false
+
+        });
+        const savedTask = await task.save(); // gọi hàm save() để lưu vào database
+        //Trả kết quả về cho client
+        return res.status(201).json({
+            message : "Tạo công việc thành công",
+            data : savedTask
+        });
+    } catch(error) {
+         return res.status(500).json({
+            message: "Tạo công việc thất bại",
             error: error.message
         });
     }

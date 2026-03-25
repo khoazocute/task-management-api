@@ -1,46 +1,40 @@
-const User = require("../model/user.model")
-const paginationHelper = require("../../../helpers/pagination");
+const User = require("../model/user.model");
 const bcrypt = require("bcryptjs");
 
-//[POST]api/v1/users/register
-
+// [POST] /api/v1/users/register
 module.exports.Register = async (req, res) => {
     try {
-        const {fullName, email, password} = req.body;
+        const { fullName, email, password } = req.body;
 
-        //  Kiểm tra dữ liệu đầu vào 
         if (!fullName || !email || !password) {
             return res.status(400).json({
-                code : 400,
-                message : "Vui lòng điền đầy đủ thông tin"
+                code: 400,
+                message: "Vui long dien day du thong tin"
             });
         }
 
-        // Validate fullName
         if (fullName.length < 2) {
             return res.status(400).json({
                 code: 400,
-                message: "Họ tên phải có ít nhất 2 ký tự"
+                message: "Ho ten phai co it nhat 2 ky tu"
             });
         }
 
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return res.status(400).json({
                 code: 400,
-                message: "Email không đúng định dạng"
+                message: "Email khong dung dinh dang"
             });
         }
 
-        //  Validate password
         if (password.length < 6) {
             return res.status(400).json({
                 code: 400,
-                message: "Mật khẩu phải có ít nhất 6 ký tự"
+                message: "Mat khau phai co it nhat 6 ky tu"
             });
         }
-        //  Kiểm tra email đã tồn tại chưa
+
         const existEmail = await User.findOne({
             email: email,
             deleted: false
@@ -49,39 +43,41 @@ module.exports.Register = async (req, res) => {
         if (existEmail) {
             return res.status(400).json({
                 code: 400,
-                message: "Email đã tồn tại"
+                message: "Email da ton tai"
             });
         }
 
-        // 3. Mã hóa mật khẩu
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Tạo user mới và lưu vào database
-        const user = new  User({
-            fullName : fullName,
-            email : email,
-            password : hashedPassword,
+        const user = new User({
+            fullName: fullName,
+            email: email,
+            password: hashedPassword,
         });
 
-        await user.save() //chỉ khi chạy lệnh này thì user mới thật sự dc tạo
+        await user.save();
 
-        //Trả kết quả
+        res.cookie("token", user.token, {
+            httpOnly: true, //k có phép fe đọc bằng document.cookies => an toàn
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production", // chỉ dc gửi qua HTTPS
+            maxAge: 7 * 24 * 60 * 60 * 1000 // thời gian sống 7 ngày
+        });
+
         return res.status(201).json({
-            code : 201,
-            message : "Đăng ký người dùng thành công",
-            token : user.token,
+            code: 201,
+            message: "Dang ky nguoi dung thanh cong",
             user: {
                 id: user.id,
                 fullName: user.fullName,
                 email: user.email,
                 status: user.status
             }
-        });  
+        });
     } catch (error) {
-    // console.error(error);
-            return res.status(500).json({
+        return res.status(500).json({
             code: 500,
-            message: "Lỗi server"
-            });
+            message: "Loi server"
+        });
     }
-}
+};

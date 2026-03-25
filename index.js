@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const app = express();
+const cors = require("cors");// code theo api thì thêm biến này vào để chặn lỗi giữa be và fe
 const bodyParser = require("body-parser"); // phải install cái này để trả về req.body
 const port = process.env.PORT;
 
@@ -8,11 +9,12 @@ const database = require("./config/database");
 database.connect();
 
 app.use(express.json());
-
+app.use(cors());
 // gọi file route
 const taskRoutes = require("./api/v1/routes/task.route");
+const userRoutes = require("./api/v1/routes/user.route");
 app.use("/api/v1/tasks", taskRoutes); //file nào có đường dẫn là /api/v1/tasks sẽ được đưa vào taskRoutes
-
+app.use("/api/v1/users", userRoutes);
 app.listen(port, () => {
   console.log(`App listening on port ${port}`);
 });

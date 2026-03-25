@@ -231,6 +231,7 @@ module.exports.editTask = async (req, res) => {
 // Dữ liệu gửi đi sẽ nằm ở req.body
 
 //[Delete] /api/v1/task/delete/id
+// Phải cài body raw để test postman
 module.exports.deleteTask = async (req, res) => {
     try {
         const { id } = req.params;
@@ -261,6 +262,7 @@ module.exports.deleteTask = async (req, res) => {
 };
 
 //[Delete] api/v1/task/delete-multi
+//API delete-multi = nhận danh sách ids → validate → updateMany để đánh dấu xóa mềm → trả kết quả.
 module.exports.deleteMultiTask = async (req, res) => {
     try {
         // Lấy dữ liệu từ request body: ids (mảng ID), key (trường cần xóa )

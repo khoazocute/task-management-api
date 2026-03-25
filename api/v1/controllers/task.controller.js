@@ -239,7 +239,7 @@ module.exports.deleteTask = async (req, res) => {
             { _id: id, deleted: false },
             {
                 deleted: true,
-                deletedAt: new Date()
+                deletedAt: new Date() // Lấy lời gian hiện tại
             }
         );
 
@@ -259,3 +259,46 @@ module.exports.deleteTask = async (req, res) => {
         });
     }
 };
+
+//[Delete] api/v1/task/delete-multi
+module.exports.deleteMultiTask = async (req, res) => {
+    try {
+        // Lấy dữ liệu từ request body: ids (mảng ID), key (trường cần xóa )
+        const {ids} = req.body; 
+// sử dụng object destructuring 
+        // Kiểm tra ids phải là mảng và không rỗng
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({
+                message : "Danh sách ids không hợp lệ"
+            })
+        }
+
+        // Cập nhật trạng thái của nhiều task trong database
+        // Xóa/cập nhật nhiều sẽ dùng updateMany
+        const result = await Task.updateMany(
+            {_id : {$in : ids}, // đây là mảng id
+              deleted : false,
+            },
+            { deleted : true,
+              deletedAt : new Date()
+            }
+        );
+// Kiểm tra xem có data gửi lên có match với dữ liệu đúng không 
+        if (result.matchedCount === 0) {
+            return res.status(404).json({
+                message: "Không tìm thấy công việc nào để xóa"
+            });
+        }
+        // Trả về response thành công
+         res.status(200).json({
+            message: "Đã xóa thành công nhiều công việc",
+            ids: ids,
+        });
+    } catch (error) {
+        // Xử lý lỗi và trả về response lỗi
+        res.status(500).json({
+            message: "Xóa nhiều công việc thất bại ",
+            error: error.message
+        });
+    }
+}

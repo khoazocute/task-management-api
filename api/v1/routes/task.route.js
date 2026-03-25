@@ -14,6 +14,8 @@ router.post("/create", controller.Create_task)
 router.patch("/edit/:id", controller.editTask)
 
 router.delete("/delete/:id", controller.deleteTask)
+
+router.delete("/delete-multi", controller.deleteMultiTask)
 module.exports = router;
 
 //routes giống như bản chỉ đường 

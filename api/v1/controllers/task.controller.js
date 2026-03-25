@@ -126,15 +126,15 @@ module.exports.Create_task = async (req, res) => {
                 message : "Trường title không được để trống"
             });
         }
-
+        const allowedStatus = ["initial", "doing", "finish"];
         if (status && !allowedStatus.includes(status)) {
             return res.status(400).json({
                 message: "Trường status không hợp lệ"
             });
         }
-
 // model là khuôn mẫu dữ liệu
 // muốn lưu gì vào DB thì phải tạo object đúng theo model đó
+//Dùng new Task -> save
         //Sau khi dữ liệu ổn sẽ tạo mới 
         const task = new Task ({
             title,
@@ -156,3 +156,106 @@ module.exports.Create_task = async (req, res) => {
         });
     }
 }
+
+// [PATCH] /api/v1/task/edit/:id
+// module.exports.editTask = async (req, res) => {
+//     // try {
+//     //     const id = req.params.id;
+//     //     //const {title , content} = req.body;
+//     //     await Task.updateOne({_id: id}, req.body);//Tìm đúng id và lấy tất cả dữ liệu client gửi thông qua req.body
+
+//     //     return res.status(200).json({
+//     //         message : "Cập nhật công việc thành công",
+//     //     });
+//     // } catch (error) {
+//     //      return res.status(500).json({
+//     //         message: "Cập nhật công việc thất bại",
+//     //         error: error.message
+//     //     });
+//     // }
+// //Viết theo kiểu nâng cao và ràng buộc nhiều hơn 
+// }
+// Validate chặt chẽ hơn , khuyên dùng 
+module.exports.editTask = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, status, content } = req.body;
+
+        const allowedStatus = ["initial", "doing", "finish"];
+
+        if (title !== undefined && title.trim() === "") {
+            return res.status(400).json({
+                message: "Trường title không được để trống"
+            });
+        }
+
+        if (status !== undefined && !allowedStatus.includes(status)) {
+            return res.status(400).json({
+                message: "Trường status không hợp lệ"
+            });
+        }
+//Tạo upateData để chỉ cho phép sửa những trường được cho phép, có tính ràng buộc chặt chẽ hơn 
+//Gửi thêm thì sẽ không update trường đó,
+        const updateData = {};//Bna đầu tạo rỗng thì chưa biết frontend gửi những trường nào
+
+        if (title !== undefined) updateData.title = title;
+        if (status !== undefined) updateData.status = status;
+        if (content !== undefined) updateData.content = content;
+
+        const result = await Task.updateOne(
+            { _id: id, deleted: false },
+            updateData
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({
+                message: "Không tìm thấy công việc"
+            });
+        }
+
+        return res.status(200).json({
+            message: "Cập nhật công việc thành công",
+            data: updateData
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Cập nhật công việc thất bại",
+            error: error.message
+        });
+    }
+};
+
+// Xác định bản ghi nào cần sửa → 
+// lấy dữ liệu mới → kiểm tra dữ liệu hợp lệ →
+//  chỉ cập nhật các field được phép → lưu xuống database → trả kết quả
+// Dữ liệu gửi đi sẽ nằm ở req.body
+
+//[Delete] /api/v1/task/delete/id
+module.exports.deleteTask = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await Task.updateOne(
+            { _id: id, deleted: false },
+            {
+                deleted: true,
+                deletedAt: new Date()
+            }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({
+                message: "Không tìm thấy công việc"
+            });
+        }
+
+        return res.status(200).json({
+            message: "Xóa công việc thành công"
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Lỗi không xóa được",
+            error: error.message
+        });
+    }
+};

@@ -81,3 +81,68 @@ module.exports.Register = async (req, res) => {
         });
     }
 };
+
+
+//[POST] api/v1/login
+module.exports.Login = async (req,res) => {
+    try {
+        const {email, password} = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                code : 400,
+                message : "Vui lòng nhập đầy đủ thông tin"
+            });
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                code: 400,
+                message: "Email khong dung dinh dang"
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                code: 400,
+                message: "Mat khau phai co it nhat 6 ky tu"
+            });
+        }
+//Kiểm tra dữ liệu có khớp không
+         const user = await User.findOne({
+            email: email,
+            deleted: false
+        });
+
+        if (!user) {
+            return res.status(401).json({
+                message: "Email khong ton tai"
+            });
+        }
+
+        if (user.status !== "active") {
+            return res.status(403).json({
+                message: "Tài khoản đã bị khóa"
+            });
+        }
+//if (password === user.password) : không được so sánh như vậy thì user.password đã dc mã hóa
+        const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+            return res.status(401).json({
+                message: "Email hoặc mật khẩu không đúng"
+            });
+        }
+        
+        const token = user.token;
+        res.cookie('token', token );//trả token cho user
+        return res.status(200).json({
+            code : 200,
+            message : "Đăng nhập thành công"
+        });
+    } catch {
+         return res.status(500).json({
+            code: 500,
+            message: "Đăng nhập thất bại"
+        });
+    }
+}

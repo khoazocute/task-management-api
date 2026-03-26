@@ -6,47 +6,6 @@ module.exports.Register = async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
 
-        if (!fullName || !email || !password) {
-            return res.status(400).json({
-                code: 400,
-                message: "Vui long dien day du thong tin"
-            });
-        }
-
-        if (fullName.length < 2) {
-            return res.status(400).json({
-                code: 400,
-                message: "Ho ten phai co it nhat 2 ky tu"
-            });
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({
-                code: 400,
-                message: "Email khong dung dinh dang"
-            });
-        }
-
-        if (password.length < 6) {
-            return res.status(400).json({
-                code: 400,
-                message: "Mat khau phai co it nhat 6 ky tu"
-            });
-        }
-
-        const existEmail = await User.findOne({
-            email: email,
-            deleted: false
-        });
-
-        if (existEmail) {
-            return res.status(400).json({
-                code: 400,
-                message: "Email da ton tai"
-            });
-        }
-
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = new User({
@@ -58,10 +17,10 @@ module.exports.Register = async (req, res) => {
         await user.save();
 
         res.cookie("token", user.token, {
-            httpOnly: true, //k có phép fe đọc bằng document.cookies => an toàn
+            httpOnly: true,
             sameSite: "lax",
-            secure: process.env.NODE_ENV === "production", // chỉ dc gửi qua HTTPS
-            maxAge: 7 * 24 * 60 * 60 * 1000 // thời gian sống 7 ngày
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
         return res.status(201).json({
@@ -82,34 +41,12 @@ module.exports.Register = async (req, res) => {
     }
 };
 
-
-//[POST] api/v1/login
-module.exports.Login = async (req,res) => {
+// [POST] /api/v1/users/login
+module.exports.Login = async (req, res) => {
     try {
-        const {email, password} = req.body;
+        const { email, password } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({
-                code : 400,
-                message : "Vui lòng nhập đầy đủ thông tin"
-            });
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({
-                code: 400,
-                message: "Email khong dung dinh dang"
-            });
-        }
-
-        if (password.length < 6) {
-            return res.status(400).json({
-                code: 400,
-                message: "Mat khau phai co it nhat 6 ky tu"
-            });
-        }
-//Kiểm tra dữ liệu có khớp không
-         const user = await User.findOne({
+        const user = await User.findOne({
             email: email,
             deleted: false
         });
@@ -122,27 +59,29 @@ module.exports.Login = async (req,res) => {
 
         if (user.status !== "active") {
             return res.status(403).json({
-                message: "Tài khoản đã bị khóa"
+                message: "Tai khoan da bi khoa"
             });
         }
-//if (password === user.password) : không được so sánh như vậy thì user.password đã dc mã hóa
+
         const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) {
+        if (!isMatch) {
             return res.status(401).json({
-                message: "Email hoặc mật khẩu không đúng"
+                message: "Email hoac mat khau khong dung"
             });
         }
-        
+
         const token = user.token;
-        res.cookie('token', token );//trả token cho user
+        res.cookie("token", token);
+
         return res.status(200).json({
-            code : 200,
-            message : "Đăng nhập thành công"
+            code: 200,
+            message: "Dang nhap thanh cong",
+            token: token
         });
-    } catch {
-         return res.status(500).json({
+    } catch (error) {
+        return res.status(500).json({
             code: 500,
-            message: "Đăng nhập thất bại"
+            message: "Dang nhap that bai"
         });
     }
-}
+};

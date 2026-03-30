@@ -3,16 +3,30 @@ const generate = require("../../../helpers/generate");
 
 const userSchema = new mongoose.Schema(
   {
-    fullName: String,
-    email: String,
-    password: String,
-    token: { //Lưu token cho mỗi user
+    fullName: {
       type: String,
-      default: () => generate.generateRandomString(30)
+      required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    token: {
+      type: String,
+      default: () => generate.generateRandomString(30),
     },
     status: {
       type: String,
-      default: "active"
+      enum: ["active", "inactive", "blocked"],
+      default: "active",
     },
     deleted: {
       type: Boolean,
@@ -23,6 +37,5 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const User = mongoose.model("User", userSchema, "users"); 
-// Khai báo model User và dùng collection trên users trên mongodb
+const User = mongoose.model("User", userSchema, "users");
 module.exports = User;

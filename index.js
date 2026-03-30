@@ -18,8 +18,10 @@ app.use(cors({
 // gọi file route
 const taskRoutes = require("./api/v1/routes/task.route");
 const userRoutes = require("./api/v1/routes/user.route");
+const aiRoutes = require("./api/v1/routes/ai.route");
 app.use("/api/v1/tasks", taskRoutes); //file nào có đường dẫn là /api/v1/tasks sẽ được đưa vào taskRoutes
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/ai", aiRoutes);
 app.listen(port, () => {
   console.log(`App listening on port ${port}`);
 });

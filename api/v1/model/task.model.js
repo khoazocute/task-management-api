@@ -1,31 +1,45 @@
-const mongoose = require('mongoose');
-const generate = require("../../../helpers/generate");
-const taskSchema = new mongoose.Schema({
+const mongoose = require("mongoose");
+
+const taskSchema = new mongoose.Schema(
+  {
     title: {
-        type: String,
+      type: String,
+      required: true,
+      trim: true,
     },
     status: {
-        type: String,
+      type: String,
+      enum: ["initial", "doing", "finish"],
+      default: "initial",
     },
     content: {
-        type: String,
+      type: String,
+      default: "",
     },
     timeStart: {
-        type: Date
+      type: Date,
     },
     timeFinish: {
-        type: Date
+      type: Date,
     },
     deleted: {
-        type: Boolean,
-        default: false
+      type: Boolean,
+      default: false,
     },
     deletedAt: {
-        type: Date,
-    }
-}, {
-    timestamps: true
-});
+      type: Date,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
 const Task = mongoose.model("Task", taskSchema, "task");
 module.exports = Task;
